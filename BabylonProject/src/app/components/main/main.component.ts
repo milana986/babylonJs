@@ -19,7 +19,6 @@ export class MainComponent implements OnInit {
 
   private engine: BABYLON.Engine; // The Babylon.js engine 
   private scene: BABYLON.Scene; // The scene where to add the nodes 
-  
 
   //booleans
   toggleWireframe: boolean = false;
