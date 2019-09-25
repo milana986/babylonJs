@@ -11,8 +11,8 @@ const routes: Routes = [
   { path: 'texture' , component: TextureComponent },
   { path: 'coordinateSystem' , component: CoordinateSystemComponent },
   { path: 'extrude', component: ExtrudeComponent },
-  { path: '', redirectTo: 'main', pathMatch: 'full' } , 
-  { path: '**', redirectTo: 'main', pathMatch: 'full' }  
+  { path: '', redirectTo: 'extrude', pathMatch: 'full' } , 
+  { path: '**', redirectTo: 'extrude', pathMatch: 'full' }  
 ];
 
 @NgModule({

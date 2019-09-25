@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { BabylonService } from '../../shared/babylon.service';
 
 import * as BABYLON from 'babylonjs';
 import * as GUI from 'babylonjs-gui';
@@ -15,7 +16,10 @@ export class ExtrudeComponent implements OnInit {
 
   canvas: any;
   camera: BABYLON.Camera; 
+  camera2: any;
   light: BABYLON.HemisphericLight;
+  GUIPanel:any;
+
 
   imgPath: string = '../../../assets/house/';
 
@@ -31,7 +35,7 @@ export class ExtrudeComponent implements OnInit {
   rightInnerWall:any;
   frontWall:any;
 
-  constructor() { }
+  constructor( private babylonService: BabylonService ) { }
 
   ngOnInit() {
     this.canvas = document.getElementById("canvas");
@@ -42,9 +46,14 @@ export class ExtrudeComponent implements OnInit {
   createScene() {
     this.engine = new BABYLON.Engine(this.canvas); 
     this.scene = new BABYLON.Scene(this.engine); 
-    this.scene.clearColor = new BABYLON.Color4(0, 0, 0.2);  //if clearColor not specified then default background of scene - darkblue
-    this.camera = new BABYLON.ArcRotateCamera("camera", 0, Math.PI/3, 30 , new BABYLON.Vector3(0, 0, 0),  this.scene);   // new BABYLON.Vector3(0,0,0) or BABYLON.Vector3.Zero()
+    this.scene.clearColor = new BABYLON.Color4(0, 0, 0.2); 
+    this.camera = new BABYLON.ArcRotateCamera("camera", 0, Math.PI/3, 30 , new BABYLON.Vector3(0, 0, 0),  this.scene);   
+    this.camera2 = new BABYLON.FreeCamera("camera2", new BABYLON.Vector3(0, 0.3, -0.7), this.scene);
     this.camera.attachControl(this.canvas, true); 
+    this.camera2.attachControl(this.canvas, true);
+    this.camera2.speed = 0.09;
+    this.camera2.minZ = 0.001;
+    this.scene.activeCamera = this.camera;
     this.light = new BABYLON.HemisphericLight("light",new BABYLON.Vector3(10, 10, 0), this.scene); 
 
     this.buildHouse();
@@ -58,6 +67,8 @@ export class ExtrudeComponent implements OnInit {
   }
 
   buildHouse() {
+    this.addGround();
+    this.setSkybox();
     this.addFloorPlafonBackWalls();
     this.addRightLeftSideWalls()
     this.addRoof();
@@ -74,6 +85,29 @@ export class ExtrudeComponent implements OnInit {
     this.faceUV[2] = new BABYLON.Vector4(7/15, 0, 14/15, 1);
   }
 
+  addGround(){
+    let ground = BABYLON.Mesh.CreateGround("ground1", 40, 40, 2, this.scene);
+    ground.rotation.z = -Math.PI; 
+    ground.rotation.x = -Math.PI; 
+    ground.position.y = -0.8;
+    let backgroundMaterial:any = new BABYLON.BackgroundMaterial("backgroundMaterial", this.scene);
+    backgroundMaterial.diffuseTexture = new BABYLON.Texture("../../../assets/grass.jpg", this.scene);
+    backgroundMaterial.diffuseTexture.uScale = 10.0; //Repeat 5 times on the Vertical Axes
+    backgroundMaterial.diffuseTexture.vScale = 10.0; //Repeat 5 times on the Horizontal Axes
+    backgroundMaterial.shadowLevel = 0.4;
+    ground.material = backgroundMaterial;
+  }
+
+  setSkybox() {
+    let skybox = BABYLON.MeshBuilder.CreateBox("skyBox", {size:300.0}, this.scene);
+    let skyboxMaterial = new BABYLON.StandardMaterial("skyBox", this.scene);
+    skyboxMaterial.backFaceCulling = false;
+    skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("../../../assets/textures/skybox", this.scene);
+    skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+    skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
+    skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
+    skybox.material = skyboxMaterial;
+  }
 
   //BABYLON.MeshBuilder.ExtrudePolygon("wall", {shape:x, depth: y, holes:z, faceUV: o }, scene);
   addFloorPlafonBackWalls() {
@@ -107,6 +141,26 @@ export class ExtrudeComponent implements OnInit {
     base.position.y = 0;
     base.position.x = 0.03;
 
+    //stairs
+    let mesh1:any = BABYLON.Mesh.CreateBox('stair1',0.5,  this.scene);
+    mesh1.material = new BABYLON.StandardMaterial('mesh1', this.scene);
+    mesh1.material.diffuseColor = new BABYLON.Color3(0.7, 0.7, 0.7);
+    mesh1.position.x = 3;
+    mesh1.scaling.x = 6;
+    mesh1.position.z = -4;
+    mesh1.scaling.z = 2.5;
+    mesh1.rotation.y = -Math.PI/2;
+    mesh1.position.y = -0.3;
+
+    let mesh2:any= BABYLON.Mesh.CreateBox('stair2',0.5,  this.scene);
+    mesh2.material = new BABYLON.StandardMaterial('mesh2', this.scene);
+    mesh2.material.diffuseColor = new BABYLON.Color3(0.7, 0.7, 0.7);
+    mesh2.position.x = 3;
+    mesh2.scaling.x = 8;
+    mesh2.position.z = -4;
+    mesh2.scaling.z = 4.5;
+    mesh2.rotation.y = -Math.PI/2;
+    mesh2.position.y = -0.6;
 
     //back wall
     let backValues = [
@@ -178,6 +232,7 @@ export class ExtrudeComponent implements OnInit {
 
     this.leftSideWall = BABYLON.MeshBuilder.ExtrudePolygon('leftSide' , {shape: sideValues, depth: 0.30, faceUV: this.faceUV }, this.scene);
     this.leftSideWall.material = new BABYLON.StandardMaterial('matLeft', this.scene);
+    //this.leftSideWall.material.diffuseColor = BABYLON.Color3.Green();
     this.leftSideWall.rotation.y = -Math.PI/2
     this.leftSideWall.rotation.z = Math.PI/2;
     this.leftSideWall.position.z = -9;
@@ -185,6 +240,7 @@ export class ExtrudeComponent implements OnInit {
 
     this.rightSideWall = BABYLON.MeshBuilder.ExtrudePolygon('rightSide' , {shape: sideValues, depth: 0.30, faceUV: this.faceUV }, this.scene);
     this.rightSideWall.material = new BABYLON.StandardMaterial('matRight', this.scene);
+    //this.rightSideWall.material.diffuseColor = BABYLON.Color3.Blue();
     this.rightSideWall.rotation.y = Math.PI/2
     this.rightSideWall.rotation.z = Math.PI/2;
     this.rightSideWall.position.z = 9;
@@ -293,7 +349,14 @@ export class ExtrudeComponent implements OnInit {
       new BABYLON.Vector3(-4,0,1)
     ]
 
-    this.frontWall = BABYLON.MeshBuilder.ExtrudePolygon('front' , {shape: frontValues, holes: [leftWindow, rightWindow, livingRoomWindow] , depth: 0.20, faceUV: this.faceUV }, this.scene);
+    let door = [
+      new BABYLON.Vector3(5,0,-1),
+      new BABYLON.Vector3(5,0,2.4),
+      new BABYLON.Vector3(3,0,2.4),
+      new BABYLON.Vector3(3,0,-1)
+    ]
+
+    this.frontWall = BABYLON.MeshBuilder.ExtrudePolygon('front' , {shape: frontValues, holes: [leftWindow, door, rightWindow, livingRoomWindow] , depth: 0.20, faceUV: this.faceUV }, this.scene);
     this.frontWall.material = new BABYLON.StandardMaterial('matBack', this.scene);
     this.frontWall.material.diffuseColor = BABYLON.Color3.Yellow();
     this.frontWall.rotation.y = Math.PI/2;
@@ -302,50 +365,35 @@ export class ExtrudeComponent implements OnInit {
     this.frontWall.position.y = 2.4;
   }
 
+  changeCameraGUI:any;
+
+  setCameraGUI() {
+    this.changeCameraGUI = this.babylonService.createGUIPanel('Promeni kameru');
+    this.changeCameraGUI.verticalAlignment = 'VERTICAL_ALIGNMENT_TOP'; 
+
+    let changeCamerPanel = this.babylonService.createStackPanel(150, 25, false, 'HORIZONTAL_ALIGNMENT_LEFT', 'VERTICAL_ALIGNMENT_CENTER' ); 
+    changeCamerPanel.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;    
+    this.changeCameraGUI.addControl(changeCamerPanel);
+
+    let changeCamerPanelCheckbox = this.babylonService.createCheckbox(20, 20, false, 'green');
+    changeCamerPanelCheckbox.onIsCheckedChangedObservable.add( value => this.scene.activeCamera = value? this.camera2 :this.camera);
+    changeCamerPanel.addControl(changeCamerPanelCheckbox);    
+    
+    let changeCamerPanelText = this.babylonService.createTextBlock("Free camera", 180, 20, 10,'white');
+    changeCamerPanel.addControl(changeCamerPanelText); 
+  }
+
 
   setGUI(){
-    //GUI
-    let myGUI = GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+    this.setCameraGUI();
 
-    var panel = new GUI.StackPanel();
-    panel.width = "210px";
-    panel.paddingLeft = "10px";
-    panel.isVertical = true;
-    panel.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-    panel.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;    
-    myGUI.addControl(panel);
+    this.GUIPanel = this.babylonService.createGUIPanel('Togluj vidljivost');
 
-    let panelHeading = new GUI.StackPanel();
-    panelHeading.width = "150px";
-    panelHeading.height = "45px";
-    panelHeading.isVertical = false;
-    panelHeading.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-    panelHeading.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;    
-    panel.addControl(panelHeading);
+    //ROOF
+    let panelRoof = this.babylonService.createStackPanel(150, 25, false, 'HORIZONTAL_ALIGNMENT_LEFT', 'VERTICAL_ALIGNMENT_CENTER' );   
+    this.GUIPanel.addControl(panelRoof);
 
-    let heading = new GUI.TextBlock();
-    heading.text = "Toggle Visibility";
-    heading.width = "180px";
-    heading.height = "40px"
-    heading.paddingLeft = "10px";
-    heading.paddingBottom = "15px";
-    heading.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-    heading.color = "white";
-    panelHeading.addControl(heading); 
-
-    let panelRoof = new GUI.StackPanel();
-    panelRoof.width = "150px";
-    panelRoof.height = "25px";
-    panelRoof.isVertical = false;
-    panelRoof.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-    panelRoof.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;    
-    panel.addControl(panelRoof);
-
-    let checkboxRoof = new GUI.Checkbox();
-    checkboxRoof.width = "20px";
-    checkboxRoof.height = "20px";
-    checkboxRoof.isChecked = true;
-    checkboxRoof.color = "green";
+    let checkboxRoof = this.babylonService.createCheckbox(20, 20, true,'green' );
     checkboxRoof.onIsCheckedChangedObservable.add((value) =>{
         if (value) {
           checkboxRoof.color = "green";
@@ -362,80 +410,33 @@ export class ExtrudeComponent implements OnInit {
       });
     panelRoof.addControl(checkboxRoof);
 
-    let textRoof = new GUI.TextBlock();
-    textRoof.text = "Krov";
-    textRoof.width = "180px";
-    textRoof.paddingLeft = "10px";
-    textRoof.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-    textRoof.color = "white";
-    panelRoof.addControl(textRoof); 
+    let textRoofText = this.babylonService.createTextBlock("Krov",180, 20, 10,'white');
+    panelRoof.addControl(textRoofText); 
+
+
+    //LEFT SIDE
+    let leftHouseSide = this.babylonService.createStackPanel(150, 25, false, 'HORIZONTAL_ALIGNMENT_LEFT', 'VERTICAL_ALIGNMENT_CENTER' );  
+    this.GUIPanel.addControl(leftHouseSide);
     
-
-    //left side
-    let leftHouseSide = new GUI.StackPanel();
-    leftHouseSide.width = "150px";
-    leftHouseSide.height = "25px";
-    leftHouseSide.isVertical = false;
-    leftHouseSide.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-    leftHouseSide.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;    
-    panel.addControl(leftHouseSide);
-
-    let leftHouseCheckbox = new GUI.Checkbox();
-    leftHouseCheckbox.width = "20px";
-    leftHouseCheckbox.height = "20px";
-    leftHouseCheckbox.isChecked = true;
-    leftHouseCheckbox.color = "green";
-    leftHouseCheckbox.onIsCheckedChangedObservable.add((value) =>{
-      if (value) {
-        leftHouseCheckbox.color = "green";
-        this.leftSideWall.isVisible = true;
-      }
-      else {
-        this.leftSideWall.isVisible = false;
-      }
-    });
+    let leftHouseCheckbox = this.babylonService.createCheckbox(20, 20, true, 'green');
+    leftHouseCheckbox.onIsCheckedChangedObservable.add(( value => this.leftSideWall.isVisible = value? true: false));
     leftHouseSide.addControl(leftHouseCheckbox);    
     
-    let leftSide = new GUI.TextBlock();
-    leftSide.text = "Leva strana";
-    leftSide.width = "180px";
-    leftSide.paddingLeft = "10px";
-    leftSide.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-    leftSide.color = "white";
-    leftHouseSide.addControl(leftSide); 
- 
+    let leftSideText = this.babylonService.createTextBlock("Leva strana",180, 20, 10,'white');
+    leftHouseSide.addControl(leftSideText); 
+    
 
-    let frontHouseSide = new GUI.StackPanel();
-    frontHouseSide.width = "150px";
-    frontHouseSide.height = "25px";
-    frontHouseSide.isVertical = false;
-    frontHouseSide.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+    // FRONT
+    let frontHouseSide = this.babylonService.createStackPanel(150, 25, false, 'HORIZONTAL_ALIGNMENT_LEFT', 'VERTICAL_ALIGNMENT_CENTER' ); 
     frontHouseSide.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;    
-    panel.addControl(frontHouseSide);
+    this.GUIPanel.addControl(frontHouseSide);
 
-    let frontHouseCheckbox = new GUI.Checkbox();
-    frontHouseCheckbox.width = "20px";
-    frontHouseCheckbox.height = "20px";
-    frontHouseCheckbox.isChecked = true;
-    frontHouseCheckbox.color = "green";
-    frontHouseCheckbox.onIsCheckedChangedObservable.add((value) =>{
-      if (value) {
-        frontHouseCheckbox.color = "green";
-        this.frontWall.isVisible = true;
-      }
-      else {
-        this.frontWall.isVisible = false;
-      }
-    });
+    let frontHouseCheckbox = this.babylonService.createCheckbox(20, 20, true, 'green');
+    frontHouseCheckbox.onIsCheckedChangedObservable.add(( value => {this.frontWall.isVisible = value? true: false}));
     frontHouseSide.addControl(frontHouseCheckbox);    
     
-    let frontSide = new GUI.TextBlock();
-    frontSide.text = "Frontalna strana";
-    frontSide.width = "180px";
-    frontSide.paddingLeft = "10px";
-    frontSide.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-    frontSide.color = "white";
-    frontHouseSide.addControl(frontSide); 
+    let frontSideText = this.babylonService.createTextBlock("Frontalna strana",180, 20, 10,'white');
+    frontHouseSide.addControl(frontSideText); 
  
 
   }
