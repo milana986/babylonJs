@@ -20,7 +20,7 @@ export class MainComponent implements OnInit {
 
   private engine: BABYLON.Engine; // The Babylon.js engine 
   private scene: BABYLON.Scene; // The scene where to add the nodes 
-  private gizmoManager: BABYLON.GizmoManager;
+  private gizmoManager: any; //BABYLON.GizmoManager;
 
   //booleans
   toggleWireframe: boolean = false;
@@ -98,7 +98,7 @@ export class MainComponent implements OnInit {
     this.gizmoManager = new BABYLON.GizmoManager(this.scene);
     this.gizmoManager.positionGizmoEnabled = true;
     // this.gizmoManager.rotationGizmoEnabled = true;
-    this.gizmoManager.scaleGizmoEnabled = true;
+    //this.gizmoManager.scaleGizmoEnabled = true;
     this.gizmoManager.boundingBoxGizmoEnabled = true;
 
     //this.gizmoManager.attachableMeshes = [this.box, this.box2];
